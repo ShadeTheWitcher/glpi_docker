@@ -25,6 +25,18 @@ RUN setcap -r /usr/sbin/apache2 \
 
 EXPOSE 8080
 
+# Plugin Fields incluido en la imagen (el Marketplace baja los plugins a /var/glpi/marketplace, que se borra al reiniciar).
+# La version debe ser IGUAL a la que ya tiene registrada la base; si no, GLPI pide actualizar el plugin y modifica tablas.
+ARG FIELDS_VERSION=1.24.7
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates bzip2 \
+ && rm -rf /var/lib/apt/lists/* \
+ && curl -fsSL "https://github.com/pluginsGLPI/fields/releases/download/${FIELDS_VERSION}/glpi-fields-${FIELDS_VERSION}.tar.bz2" -o /tmp/fields.tar.bz2 \
+ && tar -xjf /tmp/fields.tar.bz2 -C /var/www/glpi/plugins \
+ && rm /tmp/fields.tar.bz2 \
+ && chown -R www-data:www-data /var/www/glpi/plugins/fields \
+ && test -f /var/www/glpi/plugins/fields/setup.php
+
 # Nunca instalar ni actualizar la base automaticamente (la base ya esta instalada)
 ENV GLPI_SKIP_AUTOINSTALL=true \
     GLPI_SKIP_AUTOUPDATE=true
